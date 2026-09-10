@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+.next/
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# environment & secrets
+.env
+.env.*
+!.env.example
+n8n/.env
+
+# prisma
+packages/db/prisma/*.db
+
+# n8n persistence (bind-mounted by docker compose)
+infra/docker/n8n-data/
+
+# logs & coverage
+coverage/
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# backups
+infra/backups/

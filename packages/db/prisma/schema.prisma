@@ -1,0 +1,609 @@
+// Career OS — canonical Prisma schema (plan.md sections 6-31)
+// Database: Neon PostgreSQL, connection via POSTGRES_URL env var.
+// AI proposes; deterministic code validates and decides; humans authorize external actions.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Master Profile (section 6)
+// ---------------------------------------------------------------------------
+
+model CandidateProfile {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  city      String?
+  country   String?
+  headline  String?
+  summary   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  experiences    Experience[]
+  educations     Education[]
+  skills         Skill[]
+  certifications Certification[]
+  projects       Project[]
+  claims         Claim[]
+  cvVersions     CvVersion[]
+  applications   Application[]
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  profileId   String
+  company     String
+  role        String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+  description String?
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  tasks        ExperienceTask[]
+  achievements Achievement[]
+
+  @@index([profileId])
+}
+
+model ExperienceTask {
+  id           String    @id @default(cuid())
+  experienceId String
+  description  String
+  importance   String?
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
+}
+
+model Achievement {
+  id             String  @id @default(cuid())
+  experienceId   String?
+  projectId      String?
+  title          String
+  description    String
+  measurableValue String?
+  experience     Experience? @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  project        Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
+  @@index([projectId])
+}
+
+model Education {
+  id          String   @id @default(cuid())
+  profileId   String
+  institution String
+  degree      String
+  field       String
+  startDate   DateTime
+  endDate     DateTime?
+  grade       String?
+  profile     CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Skill {
+  id             String @id @default(cuid())
+  profileId      String
+  name           String
+  normalizedName String
+  level          String?
+  category       String?
+  profile        CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, normalizedName])
+  @@index([profileId])
+}
+
+model Certification {
+  id             String    @id @default(cuid())
+  profileId      String
+  name           String
+  issuer         String
+  issueDate      DateTime
+  expirationDate DateTime?
+  credentialUrl  String?
+  profile        CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  profileId    String
+  name         String
+  description  String
+  technologies String[]
+  startDate    DateTime?
+  endDate      DateTime?
+  url          String?
+  profile      CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  achievements Achievement[]
+
+  @@index([profileId])
+}
+
+// ---------------------------------------------------------------------------
+// Evidence model (sections 7-8) — the central anti-hallucination system
+// ---------------------------------------------------------------------------
+
+enum SourceType {
+  MANUAL_ENTRY
+  CV
+  RESUME
+  CERTIFICATE
+  DIPLOMA
+  PROJECT
+  JOB_DESCRIPTION
+  EMAIL
+  SCREENSHOT
+  PDF
+  PORTFOLIO
+  OTHER
+}
+
+model Source {
+  id        String     @id @default(cuid())
+  type      SourceType
+  name      String
+  uri       String?
+  createdAt DateTime   @default(now())
+
+  snapshots SourceSnapshot[]
+  evidence  Evidence[]
+}
+
+model SourceSnapshot {
+  id          String   @id @default(cuid())
+  sourceId    String
+  contentHash String
+  rawText     String?
+  storagePath String?
+  capturedAt  DateTime @default(now())
+  source      Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  evidence    Evidence[]
+
+  @@unique([sourceId, contentHash])
+  @@index([sourceId])
+}
+
+model Evidence {
+  id         String   @id @default(cuid())
+  sourceId   String
+  snapshotId String?
+  quote      String
+  location   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  source      Source          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  snapshot    SourceSnapshot? @relation(fields: [snapshotId], references: [id])
+  claimEvidence ClaimEvidence[]
+
+  @@index([sourceId])
+  @@index([snapshotId])
+}
+
+enum ClaimStatus {
+  VERIFIED
+  UNVERIFIED
+  REJECTED
+  EXPIRED
+  CONTESTED
+}
+
+model Claim {
+  id        String      @id @default(cuid())
+  profileId String
+  subject   String
+  predicate String
+  value     String
+  status    ClaimStatus @default(UNVERIFIED)
+  confidence Float      @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  profile        CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  claimEvidence  ClaimEvidence[]
+  cvClaims       CvClaim[]
+  coverLetterClaims CoverLetterClaim[]
+
+  @@index([profileId])
+  @@index([profileId, status])
+}
+
+model ClaimEvidence {
+  claimId      String
+  evidenceId   String
+  relationship String
+  claim        Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  evidence     Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+
+  @@id([claimId, evidenceId])
+}
+
+// ---------------------------------------------------------------------------
+// Job domain (sections 9-11)
+// ---------------------------------------------------------------------------
+
+model Company {
+  id              String @id @default(cuid())
+  name            String
+  normalizedName String @unique
+  website         String?
+  industry        String?
+  jobOffers       JobOffer[]
+  contacts        Contact[]
+}
+
+model JobSource {
+  id      String @id @default(cuid())
+  name    String
+  type    String
+  baseUrl String?
+  jobOffers JobOffer[]
+}
+
+model JobOffer {
+  id              String    @id @default(cuid())
+  companyId       String
+  sourceId        String
+  externalId      String?
+  title           String
+  normalizedTitle String
+  location        String?
+  remoteType      String?
+  description     String
+  descriptionHash String
+  publishedAt     DateTime?
+  discoveredAt    DateTime    @default(now())
+  canonicalUrl    String?
+  company         Company   @relation(fields: [companyId], references: [id])
+  source          JobSource @relation(fields: [sourceId], references: [id])
+  analyses        JobAnalysis[]
+  scores          JobScore[]
+  applications    Application[]
+
+  @@unique([sourceId, externalId])
+  @@index([normalizedTitle])
+  @@index([descriptionHash])
+  @@index([companyId])
+}
+
+model JobAnalysis {
+  id                     String   @id @default(cuid())
+  jobOfferId             String
+  title                  String
+  seniority              String?
+  requiredSkills         String[]
+  preferredSkills        String[]
+  tools                  String[]
+  technologies           String[]
+  keywords               String[]
+  responsibilities       String[]
+  educationRequirements  String[]
+  experienceRequirements String[]
+  extractedBy            String
+  promptVersion          String
+  createdAt              DateTime @default(now())
+  jobOffer               JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  requirements           JobRequirement[]
+
+  @@index([jobOfferId])
+}
+
+enum JobRequirementCategory {
+  EDUCATION
+  EXPERIENCE
+  SKILL
+  TOOL
+  TECHNOLOGY
+  LANGUAGE
+  CERTIFICATION
+  KEYWORD
+}
+
+enum RequirementImportance {
+  MANDATORY
+  PREFERRED
+  OPTIONAL
+}
+
+model JobRequirement {
+  id             String @id @default(cuid())
+  jobAnalysisId  String
+  category       JobRequirementCategory
+  normalizedName String
+  originalText   String
+  importance     RequirementImportance
+  mandatory      Boolean
+  jobAnalysis    JobAnalysis @relation(fields: [jobAnalysisId], references: [id], onDelete: Cascade)
+  scoreGaps      ScoreGap[]
+
+  @@unique([jobAnalysisId, category, normalizedName])
+  @@index([jobAnalysisId])
+}
+
+// ---------------------------------------------------------------------------
+// Scoring (sections 11-12) — deterministic and versioned
+// ---------------------------------------------------------------------------
+
+model ScoreRuleVersion {
+  id              String @id @default(cuid())
+  name            String
+  educationWeight Float
+  experienceWeight Float
+  skillsWeight    Float
+  toolsWeight     Float
+  keywordWeight   Float
+  version         Int
+  active          Boolean @default(false)
+  jobScores       JobScore[]
+
+  @@unique([version])
+}
+
+model JobScore {
+  id              String   @id @default(cuid())
+  jobOfferId      String
+  total           Float
+  educationScore  Float
+  experienceScore Float
+  skillsScore     Float
+  toolsScore      Float
+  keywordScore    Float
+  ruleVersionId   String
+  createdAt       DateTime @default(now())
+  jobOffer        JobOffer         @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  ruleVersion     ScoreRuleVersion @relation(fields: [ruleVersionId], references: [id])
+  gaps            ScoreGap[]
+
+  @@unique([jobOfferId, ruleVersionId])
+  @@index([jobOfferId])
+}
+
+enum GapSeverity {
+  CRITICAL
+  MAJOR
+  MINOR
+}
+
+model ScoreGap {
+  id            String      @id @default(cuid())
+  jobScoreId    String
+  requirementId String
+  severity      GapSeverity
+  reason        String
+  jobScore      JobScore       @relation(fields: [jobScoreId], references: [id], onDelete: Cascade)
+  requirement   JobRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@unique([jobScoreId, requirementId])
+  @@index([jobScoreId])
+}
+
+// ---------------------------------------------------------------------------
+// Documents (sections 17-18, 38)
+// ---------------------------------------------------------------------------
+
+model CvVersion {
+  id              String   @id @default(cuid())
+  profileId       String
+  applicationId   String?  @unique
+  templateVersion String
+  generationModel String
+  promptVersion   String
+  contentHash     String
+  createdAt       DateTime @default(now())
+  profile         CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  application     Application?     @relation("CvVersionGeneratedFor", fields: [applicationId], references: [id])
+  claims          CvClaim[]
+
+  @@index([profileId])
+  @@index([applicationId])
+}
+
+model CvClaim {
+  cvVersionId String
+  claimId     String
+  usage       String
+  cvVersion   CvVersion @relation(fields: [cvVersionId], references: [id], onDelete: Cascade)
+  claim       Claim     @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@id([cvVersionId, claimId])
+}
+
+model CoverLetterVersion {
+  id              String   @id @default(cuid())
+  applicationId   String   @unique
+  templateVersion String
+  generationModel String
+  promptVersion   String
+  contentHash     String
+  createdAt        DateTime @default(now())
+  application     Application @relation("CoverLetterVersionFor", fields: [applicationId], references: [id], onDelete: Cascade)
+  claims          CoverLetterClaim[]
+}
+
+model CoverLetterClaim {
+  coverLetterVersionId String
+  claimId              String
+  coverLetterVersion   CoverLetterVersion @relation(fields: [coverLetterVersionId], references: [id], onDelete: Cascade)
+  claim                Claim              @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@id([coverLetterVersionId, claimId])
+}
+
+// ---------------------------------------------------------------------------
+// Applications (sections 19-22)
+// ---------------------------------------------------------------------------
+
+enum ApplicationStatus {
+  A_ANALYSER
+  A_PREPARER
+  A_VALIDER
+  PRETE
+  ENVOYEE
+  REPONSE_RECUE
+  ENTRETIEN
+  OFFRE
+  ACCEPTEE
+  REFUSEE
+  ARCHIVEE
+}
+
+model Application {
+  id                    String            @id @default(cuid())
+  jobOfferId            String
+  profileId            String
+  status               ApplicationStatus @default(A_ANALYSER)
+  cvVersionId          String?
+  coverLetterVersionId String?
+  appliedAt            DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  jobOffer             JobOffer          @relation(fields: [jobOfferId], references: [id])
+  profile              CandidateProfile  @relation(fields: [profileId], references: [id])
+  cvVersion            CvVersion?        @relation("CvVersionGeneratedFor")
+  coverLetterVersion   CoverLetterVersion? @relation("CoverLetterVersionFor")
+  events               ApplicationEvent[]
+  phoneEvents          PhoneEvent[]
+  responseObservations ResponseObservation[]
+
+  @@index([status])
+  @@index([jobOfferId])
+  @@index([profileId])
+}
+
+model ApplicationEvent {
+  id            String   @id @default(cuid())
+  applicationId String
+  fromStatus    String?
+  toStatus      String
+  actorType     String
+  actorId       String?
+  note          String?
+  correlationId String
+  createdAt     DateTime @default(now())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([correlationId])
+}
+
+model PhoneEvent {
+  id            String    @id @default(cuid())
+  applicationId String
+  date          DateTime
+  contactId     String?
+  direction     String
+  outcome       String?
+  notes         String?
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  contact       Contact?    @relation(fields: [contactId], references: [id])
+
+  @@index([applicationId])
+}
+
+model ResponseObservation {
+  id                   String   @id @default(cuid())
+  applicationId        String
+  observedAt          DateTime
+  daysSinceLastContact Int
+  classification       String
+  application          Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+// ---------------------------------------------------------------------------
+// Contacts (section 23)
+// ---------------------------------------------------------------------------
+
+model Contact {
+  id          String  @id @default(cuid())
+  companyId   String
+  firstName   String?
+  lastName    String?
+  role        String?
+  email       String?
+  phone       String?
+  linkedinUrl String?
+  source      String?
+  company     Company      @relation(fields: [companyId], references: [id])
+  phoneEvents PhoneEvent[]
+
+  @@index([companyId])
+}
+
+// ---------------------------------------------------------------------------
+// Approvals (section 24)
+// ---------------------------------------------------------------------------
+
+enum ApprovalAction {
+  SEND_EMAIL
+  MARK_APPLICATION_SENT
+  EXPORT_DOCUMENT
+}
+
+model Approval {
+  id          String         @id @default(cuid())
+  entityType  String
+  entityId    String
+  action      ApprovalAction
+  approvedBy  String
+  approvedAt  DateTime       @default(now())
+  contentHash String
+  expiresAt   DateTime?
+  // entityId is polymorphic (Application, CvVersion, EmailDraft...) so there is
+  // no database-level FK here; integrity is enforced by the application layer.
+
+  @@unique([entityType, entityId, action])
+  @@index([entityType, entityId])
+}
+
+// ---------------------------------------------------------------------------
+// Audit (section 30) — append-only via application layer; no UPDATE/DELETE
+// from normal APIs. Immutability enforced by a Postgres rule + trigger
+// (see migrations and prisma/audit-rule.sql).
+// ---------------------------------------------------------------------------
+
+enum AuditActorType {
+  USER
+  SYSTEM
+  AI
+  N8N
+  WORKER
+  EXTERNAL_API
+}
+
+model AuditLog {
+  id            String         @id @default(cuid())
+  timestamp     DateTime       @default(now())
+  actorType     AuditActorType
+  actorId       String?
+  action        String
+  entityType    String
+  entityId      String?
+  source        String?
+  before        Json?
+  after         Json?
+  metadata      Json?
+  correlationId String?
+
+  @@index([timestamp])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([correlationId])
+}

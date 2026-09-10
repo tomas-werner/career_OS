@@ -1,0 +1,66 @@
+# Career OS — Docker Compose stack (plan.md section 27)
+# Usage: docker compose up --build
+#
+# NOTE: PostgreSQL is Neon (cloud), not a local container.
+# The web app connects via POSTGRES_URL loaded from .env.
+
+services:
+  career-os:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: career-os
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      POSTGRES_URL: ${POSTGRES_URL}
+      nvidia_api_key: ${nvidia_api_key}
+      N8N_BASE_URL: http://n8n:5678
+      HEALTH_TIMEOUT_MS: ${HEALTH_TIMEOUT_MS:-5000}
+    expose:
+      - "3000"
+    depends_on:
+      - n8n
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: career-os-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # Persistence (plan.md section 27)
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Paris}
+      # Executions metadata is stored in the same SQLite volume
+      N8N_RUNNERS_ENABLED: "true"
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:8080/}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5678/healthz', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  proxy:
+    image: nginx:alpine
+    container_name: career-os-proxy
+    restart: unless-stopped
+    ports:
+      - "${PROXY_PORT:-8080}:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - career-os
+      - n8n
+
+volumes:
+  n8n_data:

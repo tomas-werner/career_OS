@@ -1,0 +1,32 @@
+{
+  "name": "@career-os/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./client/index.ts",
+    "./client": "./client/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "generate": "node prisma/prisma-cli.mjs generate",
+    "migrate": "node prisma/prisma-cli.mjs migrate dev",
+    "deploy": "node prisma/prisma-cli.mjs migrate deploy",
+    "status": "node prisma/prisma-cli.mjs migrate status",
+    "studio": "node prisma/prisma-cli.mjs studio",
+    "seed": "node --experimental-strip-types prisma/seed.ts",
+    "verify-audit": "node --experimental-strip-types prisma/verify-audit-rules.ts"
+  },
+  "dependencies": {
+    "@career-os/shared": "workspace:*",
+    "@prisma/client": "^6.17.0"
+  },
+  "devDependencies": {
+    "@career-os/eslint-config": "workspace:*",
+    "@types/node": "^24.7.0",
+    "prisma": "^6.17.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
