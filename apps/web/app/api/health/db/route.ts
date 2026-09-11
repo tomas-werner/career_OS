@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@career-os/db';
+import { healthCheck } from '@career-os/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const start = Date.now();
-    await prisma.$queryRaw`SELECT 1`;
+    const healthy = await healthCheck();
+    if (!healthy) {
+      throw new Error('Database connection failed');
+    }
     return NextResponse.json({
       status: 'ok',
       db: 'connected',

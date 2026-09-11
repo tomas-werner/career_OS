@@ -1,4 +1,5 @@
-import { prisma } from '@career-os/db';
+import { query } from '@career-os/db';
+import { newId } from '@career-os/shared';
 
 export type AuditInput = {
   actorType: 'USER' | 'SYSTEM' | 'AI' | 'N8N' | 'WORKER' | 'EXTERNAL_API';
@@ -18,21 +19,24 @@ export type AuditInput = {
  */
 export async function writeAudit(input: AuditInput): Promise<void> {
   const toNullableJson = (value: unknown) =>
-    value === undefined ? undefined : (value as object);
+    value === undefined ? null : JSON.stringify(value);
   try {
-    await prisma.auditLog.create({
-      data: {
-        actorType: input.actorType,
-        action: input.action,
-        entityType: input.entityType,
-        entityId: input.entityId,
-        source: input.source,
-        before: toNullableJson(input.before),
-        after: toNullableJson(input.after),
-        metadata: toNullableJson(input.metadata),
-        correlationId: input.correlationId,
-      },
-    });
+    await query(
+      `INSERT INTO "AuditLog" (id, "actorType", "action", "entityType", "entityId", "source", "before", "after", "metadata", "correlationId")
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb, $10)`,
+      [
+        newId(),
+        input.actorType,
+        input.action,
+        input.entityType,
+        input.entityId,
+        input.source,
+        toNullableJson(input.before),
+        toNullableJson(input.after),
+        toNullableJson(input.metadata),
+        input.correlationId,
+      ]
+    );
   } catch (error) {
     console.error('audit write failed:', error);
     throw error;

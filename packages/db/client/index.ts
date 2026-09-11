@@ -1,14 +1,67 @@
 /**
- * Prisma client singleton for Career OS.
+ * PostgreSQL client singleton for Career OS.
  * Connection string comes from POSTGRES_URL (Neon PostgreSQL).
  */
-import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import type { PoolClient } from 'pg';
+export * from './types';
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const globalForDb = globalThis as unknown as { db?: Pool };
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? new PrismaClient({ log: ['warn', 'error'] });
+export const db: Pool =
+  globalForDb.db ?? new Pool({
+    connectionString: process.env.POSTGRES_URL,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForDb.db = db;
 
-export * from '@prisma/client';
+/**
+ * Helper to execute a single query
+ */
+export async function query<T = any>(text: string, params?: any[]): Promise<T[]> {
+  const start = Date.now();
+  try {
+    const res = await db.query(text, params);
+    const duration = Date.now() - start;
+    if (duration > 1000) {
+      console.warn('Slow query:', { text, duration, rows: res.rowCount });
+    }
+    return res.rows as T[];
+  } catch (error) {
+    console.error('Query error:', { text, error });
+    throw error;
+  }
+}
+
+/**
+ * Helper to execute a transaction
+ */
+export async function transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Health check for database connection
+ */
+export async function healthCheck(): Promise<boolean> {
+  try {
+    await db.query('SELECT 1');
+    return true;
+  } catch {
+    return false;
+  }
+}

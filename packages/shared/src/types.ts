@@ -1,9 +1,9 @@
 /**
  * Shared enum mirrors of database enums (plan.md sections 6-31).
  *
- * These re-declare the Prisma enums so non-DB code (AI validation, scoring,
- * state machine) can be typed without importing the generated client.
- * They MUST stay in sync with packages/db/prisma/schema.prisma.
+ * These re-declare the database enums so non-DB code (AI validation, scoring,
+ * state machine) can be typed without importing the database client.
+ * They MUST stay in sync with the database schema.
  */
 
 export const CLAIM_STATUSES = [

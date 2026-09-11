@@ -13,7 +13,7 @@ The full product plan lives in [plan.md](./plan.md).
 
 - pnpm monorepo, TypeScript strict
 - Next.js 15 (App Router) — apps/web
-- Prisma 6 + Neon PostgreSQL (`POSTGRES_URL`)
+- Direct PostgreSQL (pg) + Neon PostgreSQL (`POSTGRES_URL`)
 - NVIDIA-hosted LLMs for extraction/tailoring (`nvidia_api_key`)
 - n8n (self-hosted, Docker) + nginx reverse proxy
 - Vitest
@@ -22,7 +22,7 @@ The full product plan lives in [plan.md](./plan.md).
 
 ```
 apps/web        Next.js app (UI + Application API)
-packages/db     Prisma schema, migrations, client, seed
+packages/db     PostgreSQL client, types, utilities
 packages/shared Deterministic primitives: hashes, normalization, state machine
 infra/          Dockerfile context, nginx, scripts (backup, smoke)
 docs/architecture  ADRs
@@ -42,8 +42,8 @@ cp .env.example .env   # fill POSTGRES_URL, nvidia_api_key, N8N_ENCRYPTION_KEY
 pnpm install
 
 # 3. Database (Neon PostgreSQL)
-pnpm db:deploy     # apply migrations
-pnpm db:seed       # seed ScoreRuleVersion v1 + test JobSources
+# Use Neon dashboard or MCP tools to create tables based on packages/db/client/types.ts
+# Run seed scripts manually or via the Neon dashboard
 
 # 4. Dev server
 pnpm dev           # http://localhost:3000
@@ -72,9 +72,6 @@ node infra/scripts/smoke.mjs http://localhost:3000
 | `pnpm typecheck` | TypeScript check across workspaces |
 | `pnpm lint`    | ESLint across workspaces             |
 | `pnpm test`    | Vitest unit tests                    |
-| `pnpm db:migrate` | Create/apply a dev migration       |
-| `pnpm db:deploy`  | Apply migrations (CI/prod)         |
-| `pnpm db:seed`    | Seed baseline reference data      |
 | `pnpm smoke`   | Health endpoint smoke test           |
 
 ## Stage status
@@ -82,12 +79,12 @@ node infra/scripts/smoke.mjs http://localhost:3000
 - [~] **Stage A — Foundation** (in progress, code complete):
   - [x] pnpm monorepo + TypeScript strict (Agent 01)
   - [x] ADRs 001–005 (Agent 00)
-  - [x] Full Prisma schema for the plan's data model + audit immutability SQL
-        + seed (Agent 02) — migration to Neon pending
+  - [x] Direct PostgreSQL connection with pg library for Neon
+  - [x] Database types and utilities (Agent 02)
   - [x] Next.js app, dashboard, §40 placeholder pages, health endpoints
   - [x] Zod-validated API routes (jobs, applications + state machine)
   - [x] Docker Compose stack (web + n8n + proxy) — runtime verification pending
-  - [ ] pnpm install script approval, Prisma migrate/seed against Neon
+  - [ ] pnpm install script approval, database setup against Neon
   - [ ] `docker compose up` acceptance, green typecheck/lint/test/build
   - [ ] Authentication/security baseline (Agent 03) not yet started
 - [ ] Stage B — Knowledge layer (Master Profile UI, Evidence, Claims)

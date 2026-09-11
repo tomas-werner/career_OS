@@ -2,7 +2,7 @@
  * Server-side health helpers (plan.md section 50).
  * Used by /health API routes, the dashboard and the smoke test script.
  */
-import { prisma } from '@career-os/db';
+import { healthCheck } from '@career-os/db';
 
 export interface HealthStatus {
   ok: boolean;
@@ -12,12 +12,7 @@ export interface HealthStatus {
 }
 
 async function checkDb(): Promise<boolean> {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    return true;
-  } catch {
-    return false;
-  }
+  return healthCheck();
 }
 
 function checkN8n(): Promise<{ ok: boolean; detail?: string }> {

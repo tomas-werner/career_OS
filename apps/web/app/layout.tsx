@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -11,14 +12,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <nav className="topnav">
-          <a href="/">Dashboard</a>
-          <a href="/profile">Profile</a>
-          <a href="/jobs">Jobs</a>
-          <a href="/applications">Applications</a>
-          <a href="/documents">Documents</a>
-          <a href="/analytics">Analytics</a>
-          <a href="/audit">Audit</a>
-          <a href="/automation">Automation</a>
+          <Link href="/">Dashboard</Link>
+          <Link href="/profile">Profile</Link>
+          <Link href="/jobs">Jobs</Link>
+          <Link href="/applications">Applications</Link>
+          <Link href="/documents">Documents</Link>
+          <Link href="/analytics">Analytics</Link>
+          <Link href="/audit">Audit</Link>
+          <Link href="/automation">Automation</Link>
         </nav>
         <main>{children}</main>
       </body>

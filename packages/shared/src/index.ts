@@ -6,7 +6,7 @@
  * reproducible (plan.md sections 12, 29, 32).
  */
 
-export * from './hash.js';
-export * from './normalize.js';
-export * from './ids.js';
-export * from './types.js';
+export * from './hash';
+export * from './normalize';
+export * from './ids';
+export * from './types';
