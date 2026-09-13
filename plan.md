@@ -45,10 +45,31 @@ and what remains before Stage A is "done" per Section 55:
 - Docker is NOT installed on this machine — `docker compose up` cannot be
   verified locally yet.
 
-### Not started (Stages E–H, §52)
+### Not started (Stages F–H, §52)
 
-Application pipeline UI, n8n workflow library, Gmail approval pipeline,
-analytics, AI regression suite, security audit, authentication.
+n8n workflow library, Gmail approval pipeline, analytics, AI regression
+suite, security audit, authentication.
+
+**Update 2026-09-13 — Stage E complete (Application Pipeline).**
+
+- API: `GET /api/applications/[id]` — application + job + full
+  ApplicationEvent timeline + phone events + the list of valid transitions
+  computed from `APPLICATION_TRANSITIONS` (server re-validates on PATCH, so
+  the UI hint is never the enforcement mechanism §20). `POST
+  /api/applications/[id]/phone-events` (§22): direction INBOUND/OUTBOUND,
+  outcome, notes, optional Contact link, audited as PHONE_EVENT_RECORDED.
+- UI: /applications list (status colors per pipeline stage, latest job
+  score, applied dates, creation form against ingested jobs);
+  /applications/[id] detail — state-machine action buttons derived from the
+  shared transitions table, transition note input, chronological event
+  timeline with correlation IDs, phone event recorder.
+- E2E against Neon: invalid transition A_ANALYSER → PRETE rejected 422;
+  valid walk A_ANALYSER → A_PREPARER → A_VALIDER → PRETE each appended an
+  ApplicationEvent under the same correlation ID; phone event recorded and
+  listed.
+- Remaining §22-23 niceties: Contact management UI and linking PhoneEvent
+  to Contact records (API accepts contactId; /contacts page still a
+  placeholder).
 
 **Update 2026-09-13 — Stage D complete (Documents).**
 

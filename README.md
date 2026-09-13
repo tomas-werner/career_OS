@@ -139,7 +139,19 @@ node infra/scripts/smoke.mjs http://localhost:3000
   - [x] E2E verified against Neon: CV generated from 2 verified claims only
     (unverified Docker excluded), detail page 200, cover letter linked to
     application with provenance
-- [ ] Stage E — Application pipeline (state machine UI)
+- [x] **Stage E — Application pipeline** (complete, verified 2026-09-13):
+  - [x] API: `GET /api/applications/[id]` (detail + job + events timeline +
+    phone events + valid transitions from the shared state machine),
+    `POST /api/applications/[id]/phone-events` (§22, audit PHONE_EVENT_RECORDED)
+  - [x] UI: /applications (list with status colors + scores, creation form),
+    /applications/[id] (state-machine action buttons derived from
+    `APPLICATION_TRANSITIONS`, events timeline with correlation IDs, phone
+    event recorder)
+  - [x] E2E verified against Neon: invalid transition rejected 422 (server
+    enforcement), full valid walk A_ANALYSER → A_PREPARER → A_VALIDER → PRETE,
+    4 ApplicationEvents traced with the same correlation ID, phone event
+    recorded
+- [ ] Stage F — Automation (n8n workflows, fixtures)
 - [ ] Stage F — Automation (n8n workflows, fixtures)
 - [ ] Stage G — Communications (Gmail approval pipeline)
 - [ ] Stage H — Governance (audit UI, observability, regression suite)
