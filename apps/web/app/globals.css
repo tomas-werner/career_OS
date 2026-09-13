@@ -192,3 +192,21 @@ button:disabled {
   padding: 12px;
   border-radius: 8px;
 }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.kpi strong {
+  font-size: 22px;
+}

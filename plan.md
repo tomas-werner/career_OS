@@ -45,10 +45,29 @@ and what remains before Stage A is "done" per Section 55:
 - Docker is NOT installed on this machine — `docker compose up` cannot be
   verified locally yet.
 
-### Not started (Stages F–H, §52)
+### Not started (Stages F–G, §52)
 
-n8n workflow library, Gmail approval pipeline, analytics, AI regression
-suite, security audit, authentication.
+n8n workflow library (blocked on Docker install), Gmail approval pipeline.
+
+**Update 2026-09-13 — Stage H partial (Governance slices).**
+
+- Audit UI (§45): /audit — filters by actor, action (contains), entity type,
+  date and exact correlationId; distinct filter options generated from the
+  live table; 50 rows/page pagination. Read-only — UPDATE/DELETE stay blocked
+  at the database level (§32).
+- Analytics (§39): /analytics — jobs discovered/analyzed/scored, applications
+  total/sent, response/interview/offer rates computed from application
+  statuses only (silence never implies rejection §26), per-month breakdown
+  (last 12 months), top 10 scored jobs.
+- Contacts (§23): GET/POST /api/contacts with Zod validation, audit
+  CONTACT_CREATED, company FK enforced (404 on unknown), at-least-one-
+  identifier rule (name or email). /contacts page lists contacts with
+  company, role and phone-event counts. /api/jobs/list now includes
+  company.id to make the relation usable by clients.
+- All verified E2E against Neon in production build: /audit 200 with
+  SYSTEM+JOB_SCORED filter showing only matching rows, correlation-ID filter
+  matching APP events, /analytics 200 with KPI cards, contact create 201,
+  invalid company 404, contacts page listing with call counts.
 
 **Update 2026-09-13 — Stage E complete (Application Pipeline).**
 

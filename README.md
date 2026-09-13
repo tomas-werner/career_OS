@@ -152,9 +152,21 @@ node infra/scripts/smoke.mjs http://localhost:3000
     4 ApplicationEvents traced with the same correlation ID, phone event
     recorded
 - [ ] Stage F — Automation (n8n workflows, fixtures)
-- [ ] Stage F — Automation (n8n workflows, fixtures)
+- [~] **Stage H — Governance** (partial, verified 2026-09-13):
+  - [x] Audit UI (§45): /audit with filters (actor, action, entity type,
+    date, correlation ID), pagination, filter options generated from
+    existing data; append-only enforced at DB level (§32)
+  - [x] Analytics (§39): /analytics — jobs discovered/analyzed/scored,
+    applications, response/interview/offer rates (derived from the state
+    machine, never inferred from silence §26), monthly breakdown, top scored
+    jobs
+  - [x] Contacts (§23): GET/POST /api/contacts (Zod + audit
+    CONTACT_CREATED), /contacts page with company linkage and phone-event
+    counts; /api/jobs/list now returns company ids
+  - [ ] Observability beyond health endpoints, backup restore test,
+    AI regression suite (§47), security audit, authentication
+- [ ] Stage F — Automation (n8n workflows, fixtures) — blocked on Docker
 - [ ] Stage G — Communications (Gmail approval pipeline)
-- [ ] Stage H — Governance (audit UI, observability, regression suite)
 
 ## Security notes
 

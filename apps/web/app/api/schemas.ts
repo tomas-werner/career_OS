@@ -145,3 +145,16 @@ export const generateCoverLetterSchema = z.object({
   applicationId: z.string().min(1),
   claimIds: z.array(z.string().min(1)).max(200).optional(),
 });
+
+// --- Contacts (plan.md section 23) ---
+
+export const createContactSchema = z.object({
+  companyId: z.string().min(1),
+  firstName: z.string().max(100).optional(),
+  lastName: z.string().max(100).optional(),
+  role: z.string().max(200).optional(),
+  email: z.string().email().max(320).optional(),
+  phone: z.string().max(50).optional(),
+  linkedinUrl: z.string().url().max(2000).optional(),
+  source: z.string().max(200).optional(),
+});

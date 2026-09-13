@@ -104,7 +104,7 @@ export function buildCvModel(
   };
 }
 
-interface RenderInput extends Omit<GeneratedDocument, 'content' | 'contentHash' | 'claimsUsed'> {}
+type RenderInput = Omit<GeneratedDocument, 'content' | 'contentHash' | 'claimsUsed'>;
 
 function renderCvContent(input: RenderInput): string {
   const lines: string[] = [];
