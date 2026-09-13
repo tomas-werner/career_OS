@@ -8,6 +8,10 @@ state machine, n8n automation and an immutable audit trail.
 > external actions.**
 
 The full product plan lives in [plan.md](./plan.md).
+The UX/UI product-design specification lives in
+[docs/ux/Career_OS_Cahier_des_Charges_UX_UI.md](./docs/ux/Career_OS_Cahier_des_Charges_UX_UI.md)
+(design tokens, navigation architecture, component library, acceptance
+criteria).
 
 ## Stack
 
@@ -184,3 +188,21 @@ node infra/scripts/smoke.mjs http://localhost:3000
 - [ADR-003 Evidence model](docs/architecture/ADR-003-evidence.md)
 - [ADR-004 Audit and immutability](docs/architecture/ADR-004-audit.md)
 - [ADR-005 n8n automation](docs/architecture/ADR-005-n8n.md)
+
+## UX/UI specification
+
+The UX/UI cahier des charges (docs/ux/) is the design reference for evolving
+the current functional UI into the commercial product shell:
+
+- Design tokens: `#4F46E5` accent / `#111827` text / `#F8FAFC` background,
+  Inter typeface, 4/8/12/16px spacing scale, 12-16px card radius (§4-8)
+- Sidebar navigation with grouped sections — CAREER / OPPORTUNITIES /
+  APPLICATIONS / DOCUMENTS / INTELLIGENCE / GOVERNANCE (§9.1)
+- Signature loop: **MATCH → EVIDENCE → DECISION → ACTION → FEEDBACK** (§78)
+- Core UX rules: no unsupported claim looks verified, no AI output looks
+  final until deterministically validated, every external action shows human
+  approval, provenance exposed on documents (§80)
+- Status system combines icon + text + color, never color alone (§25, §51)
+- Design-system components to build: StatusBadge, ScoreRing,
+  MatchBreakdown, EvidenceCard, ClaimCard, Timeline, EmptyState,
+  CommandPalette (⌘K) (§63-64)

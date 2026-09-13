@@ -49,6 +49,24 @@ and what remains before Stage A is "done" per Section 55:
 
 n8n workflow library (blocked on Docker install), Gmail approval pipeline.
 
+**Update 2026-09-13 — UX/UI cahier des charges integrated.**
+
+`docs/ux/Career_OS_Cahier_des_Charges_UX_UI.md` is now the design reference
+(89 sections): vision, design tokens (palette/typography/spacing/radius),
+sidebar + header architecture, dashboard Career Command Center (Career
+Health, Opportunity Radar, Skill Gap Radar, Recommended Actions), job match
+score categories, job detail intelligence view (Why this job? / score
+breakdown / gap intelligence), profile verification states (icon + text +
+color, never color alone), Evidence/Claim centers with claim graph, Kanban
+application pipeline, Document Studio with provenance tables, AI Activity
+Center + explainability panel (§41 model/prompt/inputs/claims/validation/
+warnings), automation workflow cards, analytics funnel, audit center,
+onboarding flow, dark mode tokens, component library list (§63), and UX
+acceptance criteria (§86) + Definition of Done (§87). Signature loop:
+MATCH → EVIDENCE → DECISION → ACTION → FEEDBACK (§78). Design work should
+follow its Phase 1-7 roadmap (§85), starting with tokens + status system +
+sidebar in apps/web.
+
 **Update 2026-09-13 — Stage H partial (Governance slices).**
 
 - Audit UI (§45): /audit — filters by actor, action (contains), entity type,
