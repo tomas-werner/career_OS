@@ -171,6 +171,21 @@ node infra/scripts/smoke.mjs http://localhost:3000
     AI regression suite (§47), security audit, authentication
 - [ ] Stage F — Automation (n8n workflows, fixtures) — blocked on Docker
 - [ ] Stage G — Communications (Gmail approval pipeline)
+- [~] **UX/UI implementation** (phases 1-3 of the cahier des charges
+  roadmap §85, spec in docs/ux/):
+  - [x] Phase 1+2 — Design system: tokens (palette §4, typography §5,
+    spacing §6, radius §7, shadows §8, motion §56), dark mode §75, sidebar
+    navigation §9.1 with grouped sections + responsive §60, status system
+    (icon + text + color §25/§51)
+  - [x] Phase 3 — Core UI: Dashboard Career Command Center (Career Health
+    §11.3, Opportunity Radar §12, Skill Gap Radar §13, Recommended Actions
+    §15, Recent Activity §14), Jobs explorer with score-centered job cards
+    §16-18, Job Detail intelligence view §19-22 (Why this job?, ScoreRing
+    with match categories, MatchBreakdown per dimension, Gap intelligence)
+  - [x] Components: StatusBadge, ScoreRing, MatchBreakdown, EmptyState
+    (component library §63-64 started)
+  - [ ] Remaining: Command Palette ⌘K §10, Kanban pipeline §32,
+    Evidence/Claim graph §31, Document Studio §37, AI Activity Center §40
 
 ## Security notes
 

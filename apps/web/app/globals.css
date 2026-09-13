@@ -451,6 +451,276 @@ code {
   border-radius: var(--radius-sm);
 }
 
+/* Score ring (§18) */
+.score-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.score-ring-track {
+  stroke: var(--border);
+}
+
+.score-ring-progress {
+  transition: stroke-dashoffset var(--motion-slow) var(--ease);
+}
+
+.score-excellent .score-ring-progress {
+  stroke: var(--success);
+}
+
+.score-good .score-ring-progress {
+  stroke: var(--accent);
+}
+
+.score-moderate .score-ring-progress {
+  stroke: var(--warning);
+}
+
+.score-weak .score-ring-progress {
+  stroke: var(--danger);
+}
+
+.score-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.score-ring-label strong {
+  font-size: 1.15rem;
+  line-height: 1.1;
+}
+
+.score-ring-label span {
+  font-size: var(--text-caption);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* Empty state (§53) */
+.empty-state {
+  text-align: center;
+  padding: var(--sp-10) var(--sp-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  margin: var(--sp-3) 0;
+}
+
+.empty-state a.button {
+  display: inline-block;
+  margin-top: var(--sp-3);
+  text-decoration: none;
+  font-weight: 600;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Dashboard layout (§11-15) */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.dash-kpis {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+
+.dash-card {
+  grid-column: span 4;
+  margin: 0;
+}
+
+.dash-card.wide {
+  grid-column: span 8;
+}
+
+@media (max-width: 900px) {
+  .dash-card,
+  .dash-card.wide {
+    grid-column: span 12;
+  }
+}
+
+.dash-card h3 {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--text-small);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.opportunity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.opportunity-item:last-child {
+  border-bottom: none;
+}
+
+.opportunity-item .opp-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.opportunity-item .opp-info a {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  display: block;
+}
+
+.opportunity-item .opp-info a:hover {
+  color: var(--accent);
+}
+
+.gap-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+  font-size: var(--text-small);
+}
+
+.gap-item .status {
+  flex-shrink: 0;
+}
+
+.action-item {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  padding: var(--sp-1) 0;
+  font-size: var(--text-small);
+  border-bottom: 1px solid var(--border);
+}
+
+.action-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: baseline;
+  padding: var(--sp-1) 0;
+  font-size: var(--text-small);
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.health-bars {
+  display: grid;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+}
+
+.health-bar {
+  display: grid;
+  grid-template-columns: 110px 1fr 40px;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-small);
+}
+
+.health-track {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.health-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  transition: width var(--motion-slow) var(--ease);
+}
+
+.health-fill.high {
+  background: var(--success);
+}
+
+.health-fill.low {
+  background: var(--warning);
+}
+
+/* Job cards (§17) */
+.job-card {
+  margin: 0;
+  display: flex;
+  gap: var(--sp-4);
+}
+
+.job-card .job-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.job-card .job-head a {
+  color: var(--text);
+  font-weight: 650;
+  font-size: var(--text-h3);
+  text-decoration: none;
+}
+
+.job-card .job-head a:hover {
+  color: var(--accent);
+}
+
+.job-card .job-meta {
+  color: var(--muted);
+  font-size: var(--text-small);
+  margin-top: 2px;
+}
+
+.job-card .job-dims {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-top: var(--sp-2);
+  font-size: var(--text-caption);
+  color: var(--muted);
+}
+
+.job-card .job-dims span b {
+  color: var(--text);
+}
+
+.job-card .job-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
 /* Responsive (§60) — tablet: compact sidebar; mobile: top nav */
 @media (max-width: 900px) {
   .app-shell {

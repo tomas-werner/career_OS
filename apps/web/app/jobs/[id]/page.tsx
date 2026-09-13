@@ -1,5 +1,9 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { query } from '@career-os/db';
+import ScoreRing from '@/components/ui/ScoreRing';
+import MatchBreakdown from '@/components/ui/MatchBreakdown';
+import StatusBadge from '@/components/ui/StatusBadge';
 import AnalyzeScoreButtons from './analyze-score-buttons';
 
 export const dynamic = 'force-dynamic';
@@ -7,13 +11,11 @@ export const dynamic = 'force-dynamic';
 interface JobDetail {
   id: string;
   title: string;
-  normalizedTitle: string;
   location: string | null;
   remoteType: string | null;
   description: string;
-  canonicalUrl: string | null;
-  discoveredAt: Date;
   descriptionHash: string;
+  discoveredAt: Date;
   company: string;
   sourceName: string;
 }
@@ -27,7 +29,6 @@ interface AnalysisDetail {
   tools: string[];
   technologies: string[];
   keywords: string[];
-  responsibilities: string[];
   educationRequirements: string[];
   experienceRequirements: string[];
   extractedBy: string;
@@ -45,7 +46,6 @@ interface ScoreDetail {
   keywordScore: number;
   ruleVersion: number;
   ruleName: string;
-  createdAt: Date;
 }
 
 interface GapRow {
@@ -54,13 +54,20 @@ interface GapRow {
   requirement: string;
 }
 
+interface ProfileSkillsRow {
+  normalizedName: string;
+}
+
+function fmtDate(date: Date | null): string {
+  return date ? new Date(date).toISOString().slice(0, 10) : '—';
+}
+
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const jobs = await query<JobDetail>(
-    `SELECT j.id, j.title, j."normalizedTitle", j.location, j."remoteType", j.description,
-            j."canonicalUrl", j."discoveredAt", j."descriptionHash",
-            c.name AS company, s.name AS "sourceName"
+    `SELECT j.id, j.title, j.location, j."remoteType", j.description, j."descriptionHash",
+            j."discoveredAt", c.name AS company, s.name AS "sourceName"
      FROM "JobOffer" j
      JOIN "Company" c ON c.id = j."companyId"
      JOIN "JobSource" s ON s.id = j."sourceId"
@@ -70,7 +77,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const job = jobs[0];
   if (!job) notFound();
 
-  const [analyses, scores] = await Promise.all([
+  const [analyses, scores, profileSkills] = await Promise.all([
     query<AnalysisDetail>(
       `SELECT * FROM "JobAnalysis" WHERE "jobOfferId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
       [id],
@@ -83,6 +90,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
        ORDER BY sc."createdAt" DESC LIMIT 1`,
       [id],
     ),
+    query<ProfileSkillsRow>('SELECT "normalizedName" FROM "Skill"'),
   ]);
   const analysis = analyses[0] ?? null;
   const score = scores[0] ?? null;
@@ -98,6 +106,25 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       )
     : [];
 
+  // Why this job? (§20) — strengths and concerns derived from real data
+  const ownedSkills = new Set(profileSkills.map((skill) => skill.normalizedName));
+  const matchedSkills = analysis
+    ? analysis.requiredSkills.filter((skill) => ownedSkills.has(skill.toLowerCase().trim()))
+    : [];
+  const missingSkills = analysis
+    ? analysis.requiredSkills.filter((skill) => !ownedSkills.has(skill.toLowerCase().trim()))
+    : [];
+
+  const strengths: string[] = matchedSkills.map((skill) => `Verified skill: ${skill}`);
+  if (score && score.experienceScore >= 0.9) strengths.push('Experience requirement met');
+  if (score && score.educationScore >= 1 && analysis?.educationRequirements.length)
+    strengths.push('Education requirement met');
+
+  const concerns: string[] = missingSkills.map((skill) => `Missing skill: ${skill} (no verified evidence)`);
+  if (score && score.experienceScore < 1)
+    concerns.push(`Experience gap: ${(score.experienceScore * 100).toFixed(0)}% of required years`);
+  const criticalGaps = gaps.filter((gap) => gap.severity === 'CRITICAL').length;
+
   const chips = (items: string[]) =>
     items.map((item) => (
       <span key={item} className="chip">
@@ -107,117 +134,119 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
+      <p className="muted">
+        <Link href="/jobs">← Opportunities</Link>
+      </p>
       <h1>{job.title}</h1>
       <p className="muted">
         {job.company} — {job.location ?? 'location n/a'}
-        {job.remoteType ? ` (${job.remoteType})` : ''} · source {job.sourceName} ·
-        discovered {new Date(job.discoveredAt).toISOString().slice(0, 10)}
-      </p>
-      <p className="muted">
-        description hash <code>{job.descriptionHash.slice(0, 16)}…</code>
+        {job.remoteType ? ` (${job.remoteType})` : ''} · via {job.sourceName} · discovered{' '}
+        {fmtDate(job.discoveredAt)} · hash <code>{job.descriptionHash.slice(0, 12)}…</code>
       </p>
 
-      <div className="card">
-        <strong>AI analysis + deterministic score</strong>
-        <p className="muted">
-          Extraction via NVIDIA (untrusted data, §14) then deterministic scoring
-          (§12): profile snapshot + analysis + rule version → reproducible score.
-        </p>
-        <AnalyzeScoreButtons jobId={job.id} hasAnalysis={Boolean(analysis)} />
-        {analysis && (
-          <div>
-            <p className="muted">
-              extracted by <code>{analysis.extractedBy}</code> · prompt{' '}
-              <code>{analysis.promptVersion}</code> ·{' '}
-              {new Date(analysis.createdAt).toISOString().slice(0, 16).replace('T', ' ')}
-              {analysis.seniority ? ` · seniority: ${analysis.seniority}` : ''}
-            </p>
-            {analysis.requiredSkills.length > 0 && (
-              <p>
-                <strong>Required skills:</strong> {chips(analysis.requiredSkills)}
-              </p>
-            )}
-            {analysis.preferredSkills.length > 0 && (
-              <p>
-                <strong>Preferred:</strong> {chips(analysis.preferredSkills)}
-              </p>
-            )}
-            {analysis.tools.length > 0 && (
-              <p>
-                <strong>Tools:</strong> {chips(analysis.tools)}
-              </p>
-            )}
-            {analysis.technologies.length > 0 && (
-              <p>
-                <strong>Technologies:</strong> {chips(analysis.technologies)}
-              </p>
-            )}
-            {analysis.keywords.length > 0 && (
-              <p>
-                <strong>Keywords:</strong> {chips(analysis.keywords)}
-              </p>
-            )}
-            {analysis.educationRequirements.length > 0 && (
-              <p>
-                <strong>Education:</strong> {chips(analysis.educationRequirements)}
-              </p>
-            )}
-            {analysis.experienceRequirements.length > 0 && (
-              <p>
-                <strong>Experience:</strong> {chips(analysis.experienceRequirements)}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+      <AnalyzeScoreButtons jobId={job.id} hasAnalysis={Boolean(analysis)} />
 
       {score && (
-        <div className="card">
-          <strong>
-            Score: {(score.total * 100).toFixed(0)}/100{' '}
-            <span className="muted">
-              (rule {score.ruleName} v{score.ruleVersion})
-            </span>
-          </strong>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Dimension</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Education (×0.2)</td><td>{(score.educationScore * 100).toFixed(0)}%</td></tr>
-              <tr><td>Experience (×0.3)</td><td>{(score.experienceScore * 100).toFixed(0)}%</td></tr>
-              <tr><td>Skills (×0.3)</td><td>{(score.skillsScore * 100).toFixed(0)}%</td></tr>
-              <tr><td>Tools (×0.1)</td><td>{(score.toolsScore * 100).toFixed(0)}%</td></tr>
-              <tr><td>Keywords (×0.1)</td><td>{(score.keywordScore * 100).toFixed(0)}%</td></tr>
-            </tbody>
-          </table>
-          {gaps.length > 0 && (
-            <div>
-              <strong>Gaps ({gaps.length}) — explain without inventing (§42)</strong>
-              <ul>
-                {gaps.map((gap, index) => (
-                  <li key={index}>
-                    <span
-                      className={
-                        gap.severity === 'CRITICAL' ? 'err' : gap.severity === 'MAJOR' ? 'warn' : 'muted'
-                      }
-                    >
-                      {gap.severity}
-                    </span>{' '}
-                    <code>{gap.requirement}</code> — <span className="muted">{gap.reason}</span>
-                  </li>
-                ))}
-              </ul>
+        <div className="dash-grid">
+          <div className="card dash-card wide" style={{ display: 'flex', gap: 'var(--sp-6)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <ScoreRing score={score.total} size={120} />
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <h3 style={{ marginBottom: 'var(--sp-2)' }}>Score breakdown — rule {score.ruleName} v{score.ruleVersion}</h3>
+              <MatchBreakdown
+                dimensions={[
+                  { key: 'education', label: 'Education', weight: 0.2, score: score.educationScore },
+                  { key: 'experience', label: 'Experience', weight: 0.3, score: score.experienceScore },
+                  { key: 'skills', label: 'Skills', weight: 0.3, score: score.skillsScore },
+                  { key: 'tools', label: 'Tools', weight: 0.1, score: score.toolsScore },
+                  { key: 'keywords', label: 'Keywords', weight: 0.1, score: score.keywordScore },
+                ]}
+              />
+              <p className="muted">
+                Reproducible: same profile snapshot + analysis + rule version → identical score.
+              </p>
             </div>
-          )}
+          </div>
+
+          <div className="card dash-card">
+            <h3>Why this opportunity?</h3>
+            {strengths.length > 0 && (
+              <div className="gap-item">
+                <StatusBadge kind="VERIFIED" label="STRENGTHS" />
+              </div>
+            )}
+            {strengths.map((strength) => (
+              <div className="gap-item" key={strength}>
+                <span className="ok" aria-hidden>
+                  +
+                </span>
+                <span>{strength}</span>
+              </div>
+            ))}
+            {concerns.length > 0 && (
+              <div className="gap-item" style={{ marginTop: 'var(--sp-2)' }}>
+                <StatusBadge kind="WARNING" label="CONCERNS" />
+              </div>
+            )}
+            {concerns.map((concern) => (
+              <div className="gap-item" key={concern}>
+                <span className="warn" aria-hidden>
+                  −
+                </span>
+                <span>{concern}</span>
+              </div>
+            ))}
+            {strengths.length === 0 && concerns.length === 0 && (
+              <p className="muted">Run the analysis to get an explanation.</p>
+            )}
+          </div>
+
+          <div className="card dash-card wide">
+            <h3>
+              Gap intelligence ({gaps.length}
+              {criticalGaps > 0 ? `, ${criticalGaps} critical` : ''})
+            </h3>
+            {gaps.length > 0 ? (
+              gaps.map((gap, index) => (
+                <div className="gap-item" key={index}>
+                  <StatusBadge
+                    kind={
+                      gap.severity === 'CRITICAL' ? 'ERROR' : gap.severity === 'MAJOR' ? 'WARNING' : 'INFO'
+                    }
+                    label={gap.severity}
+                  />
+                  <span>
+                    <strong>{gap.requirement}</strong>
+                  </span>
+                  <span className="muted">— {gap.reason}</span>
+                </div>
+              ))
+            ) : (
+              <p className="muted">No gaps — profile satisfies every detected requirement.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {analysis && (
+        <div className="card">
+          <h3>AI analysis — validated deterministically</h3>
+          <p className="muted">
+            Extracted by <code>{analysis.extractedBy}</code> · prompt <code>{analysis.promptVersion}</code>{' '}
+            · {new Date(analysis.createdAt).toISOString().slice(0, 16).replace('T', ' ')}
+            {analysis.seniority ? ` · seniority: ${analysis.seniority}` : ''}
+          </p>
+          {analysis.requiredSkills.length > 0 && <p><strong>Required skills:</strong> {chips(analysis.requiredSkills)}</p>}
+          {analysis.preferredSkills.length > 0 && <p><strong>Preferred:</strong> {chips(analysis.preferredSkills)}</p>}
+          {analysis.tools.length > 0 && <p><strong>Tools:</strong> {chips(analysis.tools)}</p>}
+          {analysis.technologies.length > 0 && <p><strong>Technologies:</strong> {chips(analysis.technologies)}</p>}
+          {analysis.keywords.length > 0 && <p><strong>Keywords:</strong> {chips(analysis.keywords)}</p>}
+          {analysis.educationRequirements.length > 0 && <p><strong>Education:</strong> {chips(analysis.educationRequirements)}</p>}
+          {analysis.experienceRequirements.length > 0 && <p><strong>Experience:</strong> {chips(analysis.experienceRequirements)}</p>}
         </div>
       )}
 
       <div className="card">
-        <strong>Description (untrusted data)</strong>
+        <h3>Job description — untrusted data</h3>
         <pre className="job-description">{job.description}</pre>
       </div>
     </div>
