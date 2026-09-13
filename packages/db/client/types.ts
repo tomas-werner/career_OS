@@ -102,7 +102,7 @@ export interface Evidence {
   snapshotId?: string;
   quote: string;
   location?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
 }
 
@@ -322,8 +322,8 @@ export interface AuditLog {
   entityType: string;
   entityId?: string;
   source?: string;
-  before?: any;
-  after?: any;
-  metadata?: any;
+  before?: unknown;
+  after?: unknown;
+  metadata?: Record<string, unknown>;
   correlationId?: string;
 }

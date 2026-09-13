@@ -5,13 +5,16 @@
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
+  "env": {
+    "node": true,
+    "es2022": true
+  },
   "plugins": ["@typescript-eslint"],
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "next/core-web-vitals"
+    "plugin:@typescript-eslint/recommended"
   ],
-  "ignorePatterns": ["node_modules/", "dist/", "build/", ".next/", "coverage/", "**/generated/"],
+  "ignorePatterns": ["node_modules/", "dist/", "build/", ".next/", "coverage/", "**/generated/", "packages/db/setup-database.js"],
   "rules": {
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }]

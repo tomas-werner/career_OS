@@ -54,6 +54,19 @@ async function applySchema(client) {
   }
 }
 
+async function applyIncrementalMigrations(client) {
+  const migrations = ['20260913_stage_d_documents.sql'];
+  for (const file of migrations) {
+    const sql = readFileSync(join(__dirname, 'prisma', 'migrations', file), 'utf8');
+    try {
+      await client.query(sql);
+      console.info(`[setup-db] Applied incremental migration ${file}`);
+    } catch (error) {
+      console.warn(`[setup-db] migration ${file} skipped: ${error.message}`);
+    }
+  }
+}
+
 async function seedBaseline(client) {
   const scoreRule = await client.query(
     `INSERT INTO "ScoreRuleVersion"
@@ -116,6 +129,8 @@ async function main() {
     } else {
       console.info('[setup-db] Schema already present — skipping DDL');
     }
+
+    await applyIncrementalMigrations(client);
 
     const renamed = await migrateLegacyColumns(client);
     if (renamed > 0) {

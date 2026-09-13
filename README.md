@@ -76,7 +76,7 @@ node infra/scripts/smoke.mjs http://localhost:3000
 
 ## Stage status
 
-- [~] **Stage A — Foundation** (in progress, code complete):
+- [x] **Stage A — Foundation** (complete, verified 2026-09-13):
   - [x] pnpm monorepo + TypeScript strict (Agent 01)
   - [x] ADRs 001–005 (Agent 00)
   - [x] Direct PostgreSQL connection with pg library for Neon
@@ -84,12 +84,61 @@ node infra/scripts/smoke.mjs http://localhost:3000
   - [x] Next.js app, dashboard, §40 placeholder pages, health endpoints
   - [x] Zod-validated API routes (jobs, applications + state machine)
   - [x] Docker Compose stack (web + n8n + proxy) — runtime verification pending
-  - [ ] pnpm install script approval, database setup against Neon
-  - [ ] `docker compose up` acceptance, green typecheck/lint/test/build
-  - [ ] Authentication/security baseline (Agent 03) not yet started
-- [ ] Stage B — Knowledge layer (Master Profile UI, Evidence, Claims)
-- [ ] Stage C — Job intelligence (ingestion, AI extraction, scoring)
-- [ ] Stage D — Documents (CV, cover letters, provenance)
+  - [x] `pnpm setup-db` applied to Neon (schema + audit rules + seeds)
+  - [x] Green typecheck / lint / test / build + smoke test (web OK, DB OK)
+  - [ ] `docker compose up` acceptance — Docker Desktop not installed locally
+  - [ ] Authentication/security baseline (Agent 03) — deliberately deferred
+- [x] **Stage B — Knowledge layer** (complete, verified 2026-09-13):
+  - [x] Deterministic fact-checker: `validateClaim` / `computeConfidence` /
+    `isValueSupportedByQuotes` in `packages/shared/src/claims.ts` (section 15)
+  - [x] API: `GET/PUT /api/profile`, `GET/POST /api/sources`,
+    `GET/POST /api/evidence`, `GET/POST /api/claims` (Zod-validated, audited)
+  - [x] Sub-entity APIs: `GET/POST /api/profile/{experiences,education,skills,certifications}`
+    with date-order validation; every skill auto-creates a `candidate knows <skill>`
+    claim validated deterministically and linked to the chosen evidence
+  - [x] UI: functional Profile (identity + experience/education/skills/certifications
+    with Verified/Unverified badges), Evidence (sources) and Claims pages with
+    evidence drill-down (§43)
+  - [x] E2E verified against Neon: profile → source → evidence → sub-entities →
+    skills (SQL+CV evidence → VERIFIED 0.5, Docker no evidence → UNVERIFIED 0)
+- [x] **Stage C — Job intelligence** (complete, verified 2026-09-13):
+  - [x] Deterministic versioned scoring (§11-12): `calculateScore` +
+    `BASELINE_SCORE_RULE` in `packages/shared/src/scoring.ts`; education ×0.2,
+    experience ×0.3, skills ×0.3, tools ×0.1, keywords ×0.1; gap severity
+    CRITICAL/MAJOR/MINOR — pure, reproducible
+  - [x] Three-level deduplication (§37): `deduplicateJob` — normalized
+    company+title+location keys, description hash, trigram similarity
+    (DUPLICATE / PROBABLE_DUPLICATE / REVIEW / UNIQUE, never silent delete)
+  - [x] AI extraction pipeline (§13-14): `apps/web/lib/ai/extraction.ts` —
+    NVIDIA chat completions, job text in a delimited DATA block (untrusted),
+    injection scan + redaction, strict Zod schema (.strict rejects extra keys),
+    markdown-fence tolerant parsing; model configurable via `nvidia_model`
+    (default `openai/gpt-oss-20b` — llama-3.3-70b and gpt-oss-120b are EOL)
+  - [x] API: `POST /api/jobs/[id]/analyze` (extraction → JobAnalysis +
+    JobRequirements + audit, injection warnings), `POST /api/jobs/[id]/score`
+    (profile snapshot + analysis + active rule → upserted JobScore + ScoreGaps,
+    idempotent per (job, rule))
+  - [x] UI: /jobs list with scores, /jobs/[id] detail (§42) with analysis
+    chips, score breakdown per dimension and gap severity list
+  - [x] E2E verified against Neon + real NVIDIA API: job → analysis →
+    score 0.57 → re-score identical (reproducibility proven); gaps flagged
+    Python/Airflow as CRITICAL (absent from profile), SQL matched
+- [x] **Stage D — Documents** (complete, verified 2026-09-13):
+  - [x] Controlled generation domain (§16-17): `buildCvModel` /
+    `factCheckDocument` in `packages/shared/src/documents.ts` — statements
+    built exclusively from VERIFIED claims; deterministic content + hash;
+    fact-check gate refuses documents with any non-verified claim (422)
+  - [x] Migration: `content` column on CvVersion + CoverLetterVersion
+    (applied to Neon via `pnpm setup-db`)
+  - [x] API: `GET/POST /api/documents/cv` (CvClaim provenance rows, audit
+    CV_GENERATED), `POST /api/documents/cover-letter` (per-application,
+    links Application.coverLetterVersionId, audit COVER_LETTER_GENERATED)
+  - [x] UI: /documents (list + generation form restricted to verified
+    claims), /documents/[id] with full provenance table (claim → status →
+    evidence source types)
+  - [x] E2E verified against Neon: CV generated from 2 verified claims only
+    (unverified Docker excluded), detail page 200, cover letter linked to
+    application with provenance
 - [ ] Stage E — Application pipeline (state machine UI)
 - [ ] Stage F — Automation (n8n workflows, fixtures)
 - [ ] Stage G — Communications (Gmail approval pipeline)

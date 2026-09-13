@@ -21,7 +21,10 @@ if (process.env.NODE_ENV !== 'production') globalForDb.db = db;
 /**
  * Helper to execute a single query
  */
-export async function query<T = any>(text: string, params?: any[]): Promise<T[]> {
+export async function query<T = Record<string, unknown>>(
+  text: string,
+  params?: unknown[],
+): Promise<T[]> {
   const start = Date.now();
   try {
     const res = await db.query(text, params);

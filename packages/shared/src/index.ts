@@ -10,3 +10,7 @@ export * from './hash';
 export * from './normalize';
 export * from './ids';
 export * from './types';
+export * from './claims';
+export * from './scoring';
+export * from './dedup';
+export * from './documents';

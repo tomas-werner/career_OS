@@ -25,12 +25,18 @@ and what remains before Stage A is "done" per Section 55:
 
 ### Blocked / next actions before Stage A acceptance (§4)
 
-1. Finish `pnpm install` — approve prisma/esbuild build scripts
-   (`pnpm approve-builds` or `onlyBuiltDependencies` in `package.json`).
-2. `prisma generate` → first migration → `pnpm db:deploy` to Neon → `pnpm db:seed`.
+1. ~~Finish `pnpm install`~~ — done (2026-09-13, forced reinstall after node_modules
+   corruption; eslint + @typescript-eslint added at root).
+2. ~~`prisma generate` → first migration → `pnpm db:deploy` to Neon → `pnpm db:seed`~~ —
+   done via `pnpm setup-db` (schema + audit rules + seeds applied to Neon).
 3. Install Docker Desktop, run `docker compose up --build`, confirm health
-   endpoints for career-os and n8n.
-4. Green `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` across workspaces.
+   endpoints for career-os and n8n. **Only remaining blocker — Docker is not
+   installed on this machine.** `/api/health/n8n` returns 503 (degraded) until
+   the n8n container runs.
+4. ~~Green `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` across workspaces~~ —
+   all green (2026-09-13). typecheck ✅, lint ✅ (no-explicit-any fixed in
+   packages/db, Node globals added to root .eslintrc), tests ✅ 34/34,
+   build ✅. Smoke test: web OK, DB OK (47 ms), n8n FAIL (expected — no Docker).
 
 ### Environment notes
 
@@ -39,12 +45,103 @@ and what remains before Stage A is "done" per Section 55:
 - Docker is NOT installed on this machine — `docker compose up` cannot be
   verified locally yet.
 
-### Not started (Stages B–H, §52)
+### Not started (Stages E–H, §52)
 
-Master Profile UI, Evidence engine, Claim engine, job ingestion, AI extraction,
-scoring, fact-checker, CV/cover-letter generation + provenance, application
-pipeline UI, n8n workflow library, Gmail approval pipeline, analytics, AI
-regression suite, security audit, authentication.
+Application pipeline UI, n8n workflow library, Gmail approval pipeline,
+analytics, AI regression suite, security audit, authentication.
+
+**Update 2026-09-13 — Stage D complete (Documents).**
+
+- Controlled generation domain (§16-17): `packages/shared/src/documents.ts` —
+  `usableClaims` (VERIFIED only), `buildCvModel` (deterministic statements
+  from claim subject/predicate/value; nothing invented), `factCheckDocument`
+  (§8 gate: every statement must resolve to a verified claim). 7 unit tests.
+- DB migration `20260913_stage_d_documents.sql`: `content` column added to
+  CvVersion and CoverLetterVersion (idempotent, applied via setup-db).
+- API: `POST /api/documents/cv` — builds the model server-side, fact-checks,
+  persists CvVersion + CvClaim provenance rows, audits CV_GENERATED; any
+  violation aborts with 422. `POST /api/documents/cover-letter` — per
+  application, letter assembled from job target (system data) + verified
+  claims, CoverLetterClaim provenance, Application.coverLetterVersionId
+  linked, audit COVER_LETTER_GENERATED.
+- UI: /documents (version list with hashes, generation form restricted to
+  verified claims), /documents/[id] provenance table (claim, status, evidence
+  source types) + rendered content.
+- E2E against Neon: CV built from exactly the 2 verified claims (React, sql);
+  the unverified Docker claim was excluded; detail page + cover letter linked
+  to its application all verified.
+- Known limitation: statements render claim values as stored (e.g. normalized
+  lowercase "sql"); a display-name join on Skill.name can polish rendering in
+  a later pass. PDF/DOCX rendering (§38 renderers) not started — text only.
+
+**Update 2026-09-13 — Stage C complete (Job Intelligence).**
+
+- Deterministic scoring (§11-12): `calculateScore` in
+  `packages/shared/src/scoring.ts` with versioned rules
+  (baseline v1 = 0.2/0.3/0.3/0.1/0.1). Pure function; profile snapshot +
+  analysis + rule → identical result. Gap severities: missing required skill
+  CRITICAL, missing tool MAJOR, preferred/keyword MINOR, experience >2y
+  shortfall CRITICAL.
+- Deduplication (§37): `deduplicateJob` in `packages/shared/src/dedup.ts`.
+  Level 1 normalized company/title/location keys (legal suffixes + seniority
+  noise stripped — normalizeTitle now strips em-dashes and punctuation);
+  level 2 description hash; level 3 trigram similarity with 0.85 duplicate /
+  0.7 review thresholds. Flag only, never delete.
+- AI extraction (§13-14): `apps/web/lib/ai/extraction.ts`. Job text is
+  UNTRUSTED DATA in a delimited DATA block; system prompt forbids following
+  data-block instructions; injection patterns scanned (ignore-previous,
+  system:/assistant: forgery redacted); output validated against a strict
+  Zod schema (.strict — unexpected keys rejected) with fence-tolerant JSON
+  parsing. Failures are discriminated: MISSING_API_KEY / AI_ERROR /
+  INVALID_JSON / SCHEMA_REJECTION / TOO_LONG.
+- API: `POST /api/jobs/[id]/analyze` (audit JOB_ANALYZED + prompt-injection
+  warning surfaced), `POST /api/jobs/[id]/score` (audit JOB_SCORED).
+  JobScore upserted per (jobOfferId, ruleVersionId); stale ScoreGaps replaced
+  — re-scoring is idempotent and reproducible. `POST /api/jobs` now enforces
+  dedup via description hash (409 on duplicate).
+- UI: /jobs list (scores + analysis state), /jobs/[id] §42 detail with
+  analysis chips, per-dimension score table, severity-ordered gaps.
+- Environment: `nvidia_model` (default `openai/gpt-oss-20b`;
+  meta/llama-3.3-70b-instruct and openai/gpt-oss-120b reached NVIDIA EOL —
+  verified 2026-09-13).
+- E2E against Neon + live NVIDIA API: ingest → analyze (strict JSON accepted)
+  → score 0.57 → re-score identical totals and gaps (reproducibility proven).
+- Remaining for Stage C full breadth (§52): fact-checker integration on job
+  analysis (§15 cross-check), n8n scheduled ingestion workflows (Stage F).
+
+- Deterministic claim validation (§15): `validateClaim`, `computeConfidence`,
+  `isValueSupportedByQuotes` in `packages/shared/src/claims.ts` + 13 unit
+  tests. Strong sources (CV/RESUME/CERTIFICATE/DIPLOMA/PROJECT) → VERIFIED at
+  confidence ≥ 0.5; weak sources (MANUAL_ENTRY/OTHER) → UNVERIFIED;
+  contradictions → REJECTED. No inference (React never inferred from
+  JavaScript).
+- API routes (Zod-validated + AuditLog writes): `GET/PUT /api/profile`,
+  `GET/POST /api/sources`, `GET/POST /api/evidence`, `GET/POST /api/claims`.
+  Claim creation runs the deterministic validator server-side and persists the
+  computed status/confidence.
+- Functional UI: /profile (upsert master profile), /evidence (source
+  registry + creation), /claims (claim list with status/confidence/evidence
+  badges + creation form with evidence linking).
+- E2E verified against Neon: profile → source (CV) → evidence → claim.
+  CV-backed "candidate knows React" → VERIFIED (0.5). Unevidenced
+  "candidate knows Spring Boot" → UNVERIFIED (0).
+- Remaining for full Stage B (§52): ~~experience/education/skill sub-entity UIs~~
+  done 2026-09-13 — see below; ~~claim detail view per §43~~ done (evidence
+  drill-down on /claims).
+- **Stage B complete (2026-09-13).** Added:
+  - Zod schemas with date-order validation for Experience (endDate required
+    unless current), Education, Certification (expiration after issue).
+  - API routes: `GET/POST /api/profile/{experiences,education,skills,certifications}`.
+  - Skills auto-create a `candidate knows <skill>` claim (subject='candidate',
+    predicate='knows', value=normalizedName) validated by the deterministic
+    fact-checker and linked to user-chosen evidence — §8 rule (Claim → Evidence
+    → Source) enforced at creation time.
+  - Profile UI shows all §41 sections; skills table displays
+    Verified/Unverified/Rejected + confidence + evidence count per item.
+  - E2E against Neon: SQL skill with CV evidence → VERIFIED (0.5); Docker skill
+    without evidence → UNVERIFIED (0); invalid experience dates rejected 400.
+- Deferred: authentication (Agent 03) — user decision 2026-09-13, local-first
+  single-user build.
 
 ---
 

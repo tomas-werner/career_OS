@@ -81,7 +81,7 @@ export function normalizeTitle(title: string): string {
     'new',
   ]);
   const cleaned = base
-    .replace(/[()/\\]/g, ' ')
+    .replace(/[()/\\\-—–,.:;!?&']/g, ' ')
     .split(' ')
     .filter((w) => w && !noise.has(w));
   return cleaned.join(' ');

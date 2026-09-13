@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query, transaction } from '@career-os/db';
+import type { ApplicationStatus } from '@career-os/db';
 import { canTransition, newId } from '@career-os/shared';
 import { createApplicationSchema, transitionSchema } from '../schemas';
 
@@ -80,12 +81,18 @@ export async function PATCH(request: Request) {
   }
   const { applicationId, toStatus, note } = parsed.data;
 
-  const applications = await query('SELECT * FROM "Application" WHERE id = $1', [applicationId]);
+  const applications = await query<{ id: string; status: ApplicationStatus; appliedAt: Date | null }>(
+    'SELECT * FROM "Application" WHERE id = $1',
+    [applicationId],
+  );
   if (!applications.length) {
     return NextResponse.json({ error: 'Application not found' }, { status: 404 });
   }
 
   const application = applications[0];
+  if (!application) {
+    return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+  }
   const fromStatus = application.status;
   if (!canTransition(fromStatus, toStatus)) {
     return NextResponse.json(
