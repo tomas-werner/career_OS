@@ -14,7 +14,10 @@ import { z } from 'zod';
 export const EXTRACTED_JOB_SCHEMA = z
   .object({
     title: z.string().min(1).max(300),
-    seniority: z.string().max(100).optional(),
+    seniority: z
+      .union([z.string().max(100), z.null()])
+      .transform((value) => (value === null || value.trim() === '' ? undefined : value.trim()))
+      .optional(),
     requiredSkills: z.array(z.string().min(1).max(200)).max(50).default([]),
     preferredSkills: z.array(z.string().min(1).max(200)).max(50).default([]),
     tools: z.array(z.string().min(1).max(200)).max(50).default([]),
@@ -23,7 +26,10 @@ export const EXTRACTED_JOB_SCHEMA = z
     responsibilities: z.array(z.string().min(1).max(500)).max(30).default([]),
     educationRequirements: z.array(z.string().min(1).max(300)).max(20).default([]),
     experienceRequirements: z.array(z.string().min(1).max(300)).max(20).default([]),
-    requiredExperienceYears: z.number().min(0).max(50).optional(),
+    requiredExperienceYears: z
+      .union([z.number().min(0).max(50), z.null()])
+      .transform((value) => (value === null ? undefined : value))
+      .optional(),
   })
   .strict();
 

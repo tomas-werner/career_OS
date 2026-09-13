@@ -12,7 +12,8 @@
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "setup-db": "pnpm --filter @career-os/db setup-db",
-    "smoke": "node infra/scripts/smoke.mjs"
+    "smoke": "node infra/scripts/smoke.mjs",
+    "e2e": "node infra/scripts/e2e-full.mjs"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.44.1",

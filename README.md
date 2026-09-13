@@ -77,6 +77,7 @@ node infra/scripts/smoke.mjs http://localhost:3000
 | `pnpm lint`    | ESLint across workspaces             |
 | `pnpm test`    | Vitest unit tests                    |
 | `pnpm smoke`   | Health endpoint smoke test           |
+| `pnpm e2e`     | Full E2E suite (50 checks — all stages + security, needs the server running) |
 
 ## Stage status
 
