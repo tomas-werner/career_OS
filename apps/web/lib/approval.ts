@@ -38,7 +38,10 @@ export async function checkApproval(correlationId: string): Promise<ApprovalStat
     [correlationId],
   );
   if (rows.length === 0) return null;
-  const r = rows[rows.length - 1] as { approved: boolean; actor: string; created_at: string };
+  // rows.length > 0 guaranteed above; TS narrowing limitation on [index] access
+  // Use last element (most recent approval)
+  const r: { approved: boolean; actor: string; created_at: string } =
+    rows[rows.length - 1] as unknown as { approved: boolean; actor: string; created_at: string };
   return { approved: r.approved, approvedBy: r.actor, approvedAt: r.created_at };
 }
 
