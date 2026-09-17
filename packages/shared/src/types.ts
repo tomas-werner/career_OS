@@ -92,3 +92,14 @@ export const JOB_REQUIREMENT_CATEGORIES = [
   'KEYWORD',
 ] as const;
 export type JobRequirementCategory = (typeof JOB_REQUIREMENT_CATEGORIES)[number];
+
+export const LOCATION_TARGETS = [
+  'MAROC',
+  'INTERNATIONAL',
+  'REMOTE',
+  'EUROPE',
+  'AFRIQUE',
+  'ASIE',
+  'AMERIQUE_NORD',
+] as const;
+export type LocationTarget = (typeof LOCATION_TARGETS)[number];

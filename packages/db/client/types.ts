@@ -8,7 +8,7 @@ export type SourceType = 'MANUAL_ENTRY' | 'CV' | 'RESUME' | 'CERTIFICATE' | 'DIP
 export type ApplicationStatus = 'A_ANALYSER' | 'A_PREPARER' | 'A_VALIDER' | 'PRETE' | 'ENVOYEE' | 'REPONSE_RECUE' | 'ENTRETIEN' | 'OFFRE' | 'ACCEPTEE' | 'REFUSEE' | 'ARCHIVEE';
 export type ApprovalAction = 'SEND_EMAIL' | 'MARK_APPLICATION_SENT' | 'EXPORT_DOCUMENT';
 export type JobRequirementCategory = 'EDUCATION' | 'EXPERIENCE' | 'SKILL' | 'TOOL' | 'TECHNOLOGY' | 'LANGUAGE' | 'CERTIFICATION' | 'KEYWORD';
-export type RequirementImportance = 'MANDATORY' | 'PREFERRED' | 'OPTIONAL';
+export type LocationTarget = 'MAROC' | 'INTERNATIONAL' | 'REMOTE' | 'EUROPE' | 'AFRIQUE' | 'ASIE' | 'AMERIQUE_NORD';
 export type GapSeverity = 'CRITICAL' | 'MAJOR' | 'MINOR';
 export type AuditActorType = 'USER' | 'SYSTEM' | 'AI' | 'N8N' | 'WORKER' | 'EXTERNAL_API';
 
@@ -22,6 +22,8 @@ export interface CandidateProfile {
   country?: string;
   headline?: string;
   summary?: string;
+  locationTarget?: LocationTarget;
+  cvTemplate?: 'ANALYSTE' | 'AUDITOR' | 'CONTROLLEUR';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -182,6 +184,8 @@ export interface JobRequirement {
   importance: RequirementImportance;
   mandatory: boolean;
 }
+
+export type RequirementImportance = 'MANDATORY' | 'PREFERRED' | 'OPTIONAL';
 
 export interface ScoreRuleVersion {
   id: string;

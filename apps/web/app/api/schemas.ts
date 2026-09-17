@@ -4,7 +4,7 @@
  * (plan.md sections 13, 33).
  */
 import { z } from 'zod';
-import { APPLICATION_STATUSES, SOURCE_TYPES } from '@career-os/shared';
+import { APPLICATION_STATUSES, SOURCE_TYPES, LOCATION_TARGETS } from '@career-os/shared';
 
 export const createJobSchema = z.object({
   title: z.string().min(1).max(300),
@@ -39,6 +39,8 @@ export const upsertProfileSchema = z.object({
   country: z.string().max(100).optional(),
   headline: z.string().max(300).optional(),
   summary: z.string().max(5000).optional(),
+  locationTarget: z.enum(LOCATION_TARGETS).optional(),
+  cvTemplate: z.enum(['ANALYSTE', 'AUDITOR', 'CONTROLLEUR']).optional(),
 });
 
 export const createSourceSchema = z.object({

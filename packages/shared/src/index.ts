@@ -14,3 +14,4 @@ export * from './claims';
 export * from './scoring';
 export * from './dedup';
 export * from './documents';
+export * from './cv-templates';

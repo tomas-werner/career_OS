@@ -33,6 +33,8 @@ export interface ProfileIdentity {
   city?: string | null;
   country?: string | null;
   headline?: string | null;
+  locationTarget?: string | null;
+  cvTemplate?: 'ANALYSTE' | 'AUDITOR' | 'CONTROLLEUR';
 }
 
 export interface GeneratedDocument {
@@ -82,8 +84,14 @@ export function buildCvModel(
     else summaryStatements.push(entry);
   }
 
+  // Ajout du template CV à l'identité si présent (pour traçabilité dans le document)
+  const identityWithTemplate: ProfileIdentity = {
+    ...identity,
+    cvTemplate: identity.cvTemplate,
+  };
+
   const content = renderCvContent({
-    identity,
+    identity: identityWithTemplate,
     headline: identity.headline ?? null,
     summaryStatements,
     skillStatements,
@@ -92,7 +100,7 @@ export function buildCvModel(
   });
 
   return {
-    identity,
+    identity: identityWithTemplate,
     headline: identity.headline ?? null,
     summaryStatements,
     skillStatements,

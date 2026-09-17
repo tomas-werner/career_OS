@@ -2672,7 +2672,268 @@ After NVIDIA AI extraction:
 
 ---
 
-# 59. Recommended First Milestone
+# 59. CV Template Engine — Systeme de Templates CV
+
+**Update 2026-09-17 — Cahier des charges Templates CV intégré.**
+
+`Career_OS_Cahier_des_Charges_Templates_CV.md` est maintenant la spécification de référence pour le module CV Template Engine (36 sections).
+
+## Objectif du Module
+
+Le module **CV Template Engine** de **Career_OS** a pour objectif de gérer plusieurs modèles de CV professionnels et de permettre au système de sélectionner automatiquement le modèle le plus approprié selon :
+
+- le **poste recherché**
+- le **secteur d'activité**
+- le **type d'entreprise**
+- le **canal de candidature**
+- le niveau d'importance de l'**ATS (Applicant Tracking System)**
+- le **profil du candidat**
+- la **langue demandée**
+- la quantité d'informations à présenter
+
+## Les Trois Templates Principaux
+
+| ID | Nom | Fonction principale |
+|---|---|---|
+| `CV_ATS_PROFESSIONAL` | ATS Professional | Candidatures automatisées et ATS |
+| `CV_FINANCE_BANKING` | Finance & Banking | Finance, banque, crédit, risque, audit |
+| `CV_EXECUTIVE_CLASSIC` | Executive Classic | Candidatures directes et présentation premium |
+
+## Règles Linguistiques Obligatoires
+
+### Langue par défaut
+**Tous les CV doivent être générés en français à 100 % par défaut.**
+
+### Version anglaise
+Une version **100 % en anglais** peut être générée uniquement lorsque l'utilisateur la demande explicitement.
+
+### Interdiction du mélange linguistique
+Lorsque la langue sélectionnée est le français :
+- titres en français
+- résumé en français
+- expériences en français
+- compétences en français lorsque leur traduction est pertinente
+- formations en français
+- certifications en français lorsque possible
+- libellés des dates et sections en français
+
+Lorsque la langue sélectionnée est l'anglais :
+- l'ensemble du CV doit être en anglais
+- aucun titre français ne doit subsister
+- aucune section ne doit être partiellement traduite
+
+**Principe : une génération = une seule langue.**
+
+## Moteur de Sélection Automatique
+
+### Variables d'entrée
+```text
+job_title
+industry
+company_type
+application_channel
+seniority
+ats_required
+language
+candidate_experience
+job_keywords
+```
+
+### Règles de sélection
+
+**Cas 1 — ATS élevé**
+```text
+Canal = Site carrière
+ATS = Élevé
+```
+→ `CV_ATS_PROFESSIONAL`
+
+**Cas 2 — Banque / finance**
+```text
+Secteur = Banque
+Poste = Analyste Crédit
+```
+→ `CV_FINANCE_BANKING`
+
+**Cas 3 — Candidature directe**
+```text
+Canal = Recruteur
+ATS = Faible
+```
+→ `CV_EXECUTIVE_CLASSIC`
+
+**Cas 4 — Situation ambiguë**
+Si Career_OS ne peut pas déterminer le template :
+→ `CV_ATS_PROFESSIONAL`
+
+### Règle de priorité
+
+| Situation détectée | Template |
+|---|---|
+| ATS élevé | ATS Professional |
+| Banque + Finance | Finance & Banking |
+| Crédit | Finance & Banking |
+| Risque bancaire | Finance & Banking |
+| Audit | ATS Professional ou Finance & Banking |
+| Finance d'entreprise | Finance & Banking |
+| Candidature directe | Executive Classic |
+| Recruteur / Networking | Executive Classic |
+| Grande entreprise | ATS Professional |
+| Offre ambiguë | ATS Professional |
+
+## Architecture Technique Recommandée
+
+```text
+career_os/
+│
+├── candidate/
+│   ├── profile
+│   ├── experience
+│   ├── education
+│   ├── skills
+│   └── certifications
+│
+├── job_analysis/
+│   ├── parser
+│   ├── keyword_extractor
+│   ├── skill_matcher
+│   ├── industry_detector
+│   └── ats_detector
+│
+├── templates/
+│   │
+│   ├── ats_professional/
+│   │   ├── template
+│   │   ├── config
+│   │   └── rules
+│   │
+│   ├── finance_banking/
+│   │   ├── template
+│   │   ├── config
+│   │   └── rules
+│   │
+│   └── executive_classic/
+│       ├── template
+│       ├── config
+│       └── rules
+│
+├── cv_engine/
+│   ├── template_selector
+│   ├── language_manager
+│   ├── content_optimizer
+│   ├── renderer
+│   ├── pdf_generator
+│   └── validator
+│
+└── output/
+    ├── previews/
+    └── generated_cvs/
+```
+
+## Règle Fondamentale d'Intégrité
+
+Career_OS ne doit jamais :
+- inventer une expérience
+- inventer un diplôme
+- inventer une certification
+- inventer une compétence
+- inventer une langue
+- inventer un niveau de maîtrise
+- inventer un chiffre
+- modifier les dates
+- transformer artificiellement un poste en un autre poste
+
+Le système peut **reformuler**, **réorganiser**, **prioriser** et **adapter**, mais il ne doit pas **falsifier**.
+
+## Règle Centrale à Intégrer
+
+```text
+DEFAULT_LANGUAGE = FR
+
+IF user_explicitly_requests_english:
+    LANGUAGE = EN
+ELSE:
+    LANGUAGE = FR
+
+IF user_does_not_request_a_specific_template:
+    TEMPLATE = AUTOMATIC_SELECTION
+
+IF template_selection_is_uncertain:
+    TEMPLATE = CV_ATS_PROFESSIONAL
+
+NEVER_INVENT_CANDIDATE_INFORMATION = TRUE
+```
+
+## Intégration avec les Stages Existants
+
+Ce module s'intègre naturellement dans **Stage D — Documents** (Agent 12-16) :
+
+- **Agent 12** : CV schema/templates (maintenant avec 3 templates spécifiés)
+- **Agent 13** : Controlled tailoring (optimisation du contenu selon l'offre)
+- **Agent 14** : Cover letters (peut utiliser les mêmes principes de templates)
+- **Agent 15** : PDF/DOCX renderer (génération finale)
+- **Agent 16** : Document provenance (traçabilité complète)
+
+## Critères d'Acceptation Principaux
+
+### Templates
+- [ ] Les 3 templates sont disponibles
+- [ ] Chaque template possède un identifiant unique
+- [ ] Chaque template possède sa configuration
+- [ ] Chaque template supporte le français
+- [ ] Chaque template peut supporter l'anglais sur demande
+
+### Langue
+- [ ] Le français est la langue par défaut
+- [ ] Aucun CV anglais n'est généré automatiquement
+- [ ] Une version anglaise nécessite une demande explicite
+- [ ] Un CV français ne doit pas contenir de sections anglaises
+- [ ] Un CV anglais ne doit pas contenir de sections françaises
+
+### Données
+- [ ] Les données candidat sont centralisées
+- [ ] Les templates utilisent des variables
+- [ ] Le contenu n'est pas dupliqué entre les templates
+
+### Analyse d'offre
+- [ ] L'offre est analysée
+- [ ] Les mots-clés sont extraits
+- [ ] Le secteur est identifié
+- [ ] Le poste est identifié
+- [ ] Le niveau ATS est estimé
+- [ ] Le template peut être sélectionné automatiquement
+
+### Génération
+- [ ] Le contenu est adapté à l'offre
+- [ ] Les expériences sont reformulées sans invention
+- [ ] Les compétences réelles sont privilégiées
+- [ ] Le CV est généré en PDF
+- [ ] Le nom du fichier respecte la convention
+
+### Validation
+- [ ] Vérification ATS
+- [ ] Vérification linguistique
+- [ ] Vérification des dates
+- [ ] Vérification des coordonnées
+- [ ] Vérification des sections
+- [ ] Vérification des mots-clés
+- [ ] Vérification du nombre de pages
+- [ ] Vérification finale de lisibilité
+
+Le document complet contient 36 sections détaillant :
+- Design et structure de chaque template
+- Règles ATS et validation
+- Catégorisation des compétences financières
+- Adaptation sectorielle
+- Métadonnées des templates
+- Interface utilisateur
+- Nommage des fichiers
+- Versioning
+- Ordre de développement recommandé
+
+---
+
+# 60. Recommended First Milestone
 
 Do not begin by building the whole dashboard.
 
