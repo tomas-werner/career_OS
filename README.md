@@ -13,6 +13,20 @@ The UX/UI product-design specification lives in
 (design tokens, navigation architecture, component library, acceptance
 criteria).
 
+## Product specifications
+
+- **CV Template Engine**: [Career_OS_Cahier_des_Charges_Templates_CV.md](./Career_OS_Cahier_des_Charges_Templates_CV.md)
+  - 3 professional CV templates (ATS Professional, Finance & Banking, Executive Classic)
+  - Automatic template selection based on job/sector/ATS requirements
+  - French by default, English on explicit request only
+  - Content optimization without falsification
+- **Gmail API Integration**: [Career_OS_Cahier_des_Charges_Integration_Gmail_API.md](./Career_OS_Cahier_des_Charges_Integration_Gmail_API.md)
+  - OAuth 2.0 authentication with secure token storage
+  - Email classification (job offers, interview invitations, rejections, etc.)
+  - Automatic Application Tracker updates
+  - Draft generation and send validation
+  - Phase 1-5 development roadmap
+
 ## Stack
 
 - pnpm monorepo, TypeScript strict
@@ -144,6 +158,12 @@ node infra/scripts/smoke.mjs http://localhost:3000
   - [x] E2E verified against Neon: CV generated from 2 verified claims only
     (unverified Docker excluded), detail page 200, cover letter linked to
     application with provenance
+  - [ ] **CV Template Engine** (specification complete, implementation pending):
+    - [ ] 3 professional templates: ATS Professional, Finance & Banking, Executive Classic
+    - [ ] Automatic template selection based on job/sector/ATS requirements
+    - [ ] French by default, English on explicit request only
+    - [ ] Content optimization without falsification
+    - [ ] Full specification in [Career_OS_Cahier_des_Charges_Templates_CV.md](./Career_OS_Cahier_des_Charges_Templates_CV.md)
 - [x] **Stage E — Application pipeline** (complete, verified 2026-09-13):
   - [x] API: `GET /api/applications/[id]` (detail + job + events timeline +
     phone events + valid transitions from the shared state machine),
@@ -171,7 +191,12 @@ node infra/scripts/smoke.mjs http://localhost:3000
   - [ ] Observability beyond health endpoints, backup restore test,
     AI regression suite (§47), security audit, authentication
 - [ ] Stage F — Automation (n8n workflows, fixtures) — blocked on Docker
-- [ ] Stage G — Communications (Gmail approval pipeline)
+- [ ] **Stage G — Communications** (Gmail approval pipeline):
+  - [ ] Gmail OAuth 2.0 integration with secure token storage
+  - [ ] Email reading and classification (job offers, interviews, rejections)
+  - [ ] Automatic Application Tracker updates based on email detection
+  - [ ] Draft generation and send validation
+  - [ ] Full specification in [Career_OS_Cahier_des_Charges_Integration_Gmail_API.md](./Career_OS_Cahier_des_Charges_Integration_Gmail_API.md)
 - [~] **UX/UI implementation** (phases 1-3 of the cahier des charges
   roadmap §85, spec in docs/ux/):
   - [x] Phase 1+2 — Design system: tokens (palette §4, typography §5,
