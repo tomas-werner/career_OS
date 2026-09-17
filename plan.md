@@ -51,7 +51,7 @@ n8n workflow library (blocked on Docker install), Gmail approval pipeline.
 
 **Update 2026-09-13 — UX/UI cahier des charges integrated.**
 
-`docs/ux/Career_OS_Cahier_des_Charges_UX_UI.md` is now the design reference
+`docs/specifications/ux-ui-design.md` is now the design reference
 (89 sections): vision, design tokens (palette/typography/spacing/radius),
 sidebar + header architecture, dashboard Career Command Center (Career
 Health, Opportunity Radar, Skill Gap Radar, Recommended Actions), job match
@@ -2676,7 +2676,7 @@ After NVIDIA AI extraction:
 
 **Update 2026-09-17 — Cahier des charges Templates CV intégré.**
 
-`Career_OS_Cahier_des_Charges_Templates_CV.md` est maintenant la spécification de référence pour le module CV Template Engine (36 sections).
+`docs/specifications/cv-templates-engine.md` est maintenant la spécification de référence pour le module CV Template Engine (36 sections).
 
 ## Objectif du Module
 

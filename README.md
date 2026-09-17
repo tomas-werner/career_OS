@@ -8,24 +8,23 @@ state machine, n8n automation and an immutable audit trail.
 > external actions.**
 
 The full product plan lives in [plan.md](./plan.md).
-The UX/UI product-design specification lives in
-[docs/ux/Career_OS_Cahier_des_Charges_UX_UI.md](./docs/ux/Career_OS_Cahier_des_Charges_UX_UI.md)
-(design tokens, navigation architecture, component library, acceptance
-criteria).
 
 ## Product specifications
 
-- **CV Template Engine**: [Career_OS_Cahier_des_Charges_Templates_CV.md](./Career_OS_Cahier_des_Charges_Templates_CV.md)
+- **CV Template Engine**: [docs/specifications/cv-templates-engine.md](./docs/specifications/cv-templates-engine.md)
   - 3 professional CV templates (ATS Professional, Finance & Banking, Executive Classic)
   - Automatic template selection based on job/sector/ATS requirements
   - French by default, English on explicit request only
   - Content optimization without falsification
-- **Gmail API Integration**: [Career_OS_Cahier_des_Charges_Integration_Gmail_API.md](./Career_OS_Cahier_des_Charges_Integration_Gmail_API.md)
+- **Gmail API Integration**: [docs/specifications/gmail-api-integration.md](./docs/specifications/gmail-api-integration.md)
   - OAuth 2.0 authentication with secure token storage
   - Email classification (job offers, interview invitations, rejections, etc.)
   - Automatic Application Tracker updates
   - Draft generation and send validation
   - Phase 1-5 development roadmap
+- **UX/UI Design**: [docs/specifications/ux-ui-design.md](./docs/specifications/ux-ui-design.md)
+  - Design tokens, navigation architecture, component library
+  - Acceptance criteria and commercial product design
 
 ## Stack
 
@@ -163,7 +162,7 @@ node infra/scripts/smoke.mjs http://localhost:3000
     - [ ] Automatic template selection based on job/sector/ATS requirements
     - [ ] French by default, English on explicit request only
     - [ ] Content optimization without falsification
-    - [ ] Full specification in [Career_OS_Cahier_des_Charges_Templates_CV.md](./Career_OS_Cahier_des_Charges_Templates_CV.md)
+    - [ ] Full specification in [docs/specifications/cv-templates-engine.md](./docs/specifications/cv-templates-engine.md)
 - [x] **Stage E — Application pipeline** (complete, verified 2026-09-13):
   - [x] API: `GET /api/applications/[id]` (detail + job + events timeline +
     phone events + valid transitions from the shared state machine),
@@ -196,9 +195,9 @@ node infra/scripts/smoke.mjs http://localhost:3000
   - [ ] Email reading and classification (job offers, interviews, rejections)
   - [ ] Automatic Application Tracker updates based on email detection
   - [ ] Draft generation and send validation
-  - [ ] Full specification in [Career_OS_Cahier_des_Charges_Integration_Gmail_API.md](./Career_OS_Cahier_des_Charges_Integration_Gmail_API.md)
+  - [ ] Full specification in [docs/specifications/gmail-api-integration.md](./docs/specifications/gmail-api-integration.md)
 - [~] **UX/UI implementation** (phases 1-3 of the cahier des charges
-  roadmap §85, spec in docs/ux/):
+  roadmap §85, spec in docs/specifications/ux-ui-design.md):
   - [x] Phase 1+2 — Design system: tokens (palette §4, typography §5,
     spacing §6, radius §7, shadows §8, motion §56), dark mode §75, sidebar
     navigation §9.1 with grouped sections + responsive §60, status system
